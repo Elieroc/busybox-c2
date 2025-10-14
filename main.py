@@ -6,23 +6,38 @@ def show_banner():
     print(Figlet(font="slant").renderText("BusyBox C2"))
 
 def send_cmd(socket, cmd):
-
-    socket.sendall((cmd + "\n").encode())
-
-    data_parts = []
+    marker = "__END_OF_CMD_{}__".format(int(time.time()*1000))
+    full_cmd = cmd + " ; echo " + marker
+    socket.sendall((full_cmd + "\n").encode())
+    buf = bytearray()
+    printed = 0
+    marker_b = marker.encode()
     while True:
-        r, _, _ = select.select([socket], [], [], 0.2)
+        r, _, _ = select.select([socket], [], [], 0.5)
         if r:
-            chunk = socket.recv(4096)
+            try:
+                chunk = socket.recv(4096)
+            except BlockingIOError:
+                continue
             if not chunk:
-                break
-            data_parts.append(chunk)
-            sys.stdout.write(b"".join(data_parts).decode(errors="replace"))
-            sys.stdout.flush()
+                if printed < len(buf):
+                    sys.stdout.write(buf[printed:].decode(errors="replace"))
+                    sys.stdout.flush()
+                return [bytes(buf)]
+            buf.extend(chunk)
+            idx = buf.find(marker_b)
+            if idx != -1:
+                if printed < idx:
+                    sys.stdout.write(buf[printed:idx].decode(errors="replace"))
+                    sys.stdout.flush()
+                return [bytes(buf)]
+            else:
+                if len(buf) > printed:
+                    sys.stdout.write(buf[printed:].decode(errors="replace"))
+                    sys.stdout.flush()
+                    printed = len(buf)
         else:
-            break
-    if data_parts:
-        return data_parts
+            continue
 
 def show_cmd_output(cmd_output):
     if cmd_output:

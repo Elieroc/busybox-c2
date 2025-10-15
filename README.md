@@ -15,3 +15,5 @@ BusyBoxC2 is a TCP bind shell command and control.
 ## Options
 - `/scan_discover` (root required) : ARP SCAN to found active hosts
 - `/obfuscation_ascii` : Command obfuscation with ASCII encoding
+- `/obfuscation_base64` : Command obfuscation with base64 encoding
+- `/persistence_webshell` : Create httpd server and drop a custom pwnyshell

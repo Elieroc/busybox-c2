@@ -1,4 +1,6 @@
 # busybox-c2
+## Description
+BusyBoxC2 is a TCP bind shell command and control.
 ## Usage
 ```python3 main.py```
 ## Options

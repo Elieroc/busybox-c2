@@ -1,0 +1,51 @@
+[2025-09-25 17:01:43] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @1ca02ebc'  
+[2025-09-25 15:01:46] [INFO][net.sourceforge.ganttproject] Starting RSS check...  
+[2025-09-25 15:01:47] [INFO][net.sourceforge.ganttproject] RSS check finished  
+[2025-09-25 15:01:47] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-09-25 15:01:54] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: Views (and table valued functions) are the most underrated SQL feature! They work very well together with jOOQ and jOOQ's code generator! https://www.jooq.org/doc/latest/manual/code-generation/codegen-advanced/codegen-config-database/codegen-database-table-valued-functions/
+  
+[2025-09-25 15:02:30] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-09-26 10:44:31] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @1ca02ebc'  
+[2025-09-26 08:44:35] [INFO][net.sourceforge.ganttproject] Starting RSS check...  
+[2025-09-26 08:44:35] [INFO][net.sourceforge.ganttproject] RSS check finished  
+[2025-09-26 08:44:35] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-09-26 08:44:42] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: Move logic to your data, not data to your logic, by running procedural code as a stored function: https://www.jooq.org/doc/latest/manual/sql-building/ddl-statements/create-statement/create-function-statement/
+  
+[2025-09-26 09:09:22] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-02 10:01:14] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @458b72d2'  
+[2025-10-02 08:01:17] [INFO][net.sourceforge.ganttproject] Starting RSS check...  
+[2025-10-02 08:01:18] [INFO][net.sourceforge.ganttproject] RSS check finished  
+[2025-10-02 08:01:18] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-02 08:01:28] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: jOOQ Queries extend Flow.Publisher, and can thus be used in reactive APIs. Blocking on JDBC by default, but if you configure an R2DBC ConnectionFactory, it's automatically non-blocking!
+  
+[2025-10-02 08:01:42] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-03 14:01:41] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @1ca02ebc'  
+[2025-10-03 12:01:45] [INFO][net.sourceforge.ganttproject] Starting RSS check...  
+[2025-10-03 12:01:50] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: You can extend jOOQ with alternative syntax using plain SQL templating: https://www.jooq.org/doc/latest/manual/sql-building/plain-sql-templating/
+  
+[2025-10-03 12:02:02] [INFO][net.sourceforge.ganttproject] RSS check finished  
+[2025-10-03 12:02:02] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-03 12:02:09] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-03 14:03:31] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @1ca02ebc'  
+[2025-10-03 12:03:39] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: The logical order of SELECT operations doesn't match the lexical (syntactic) order of operations. Learn more about this here: https://blog.jooq.org/a-beginners-guide-to-the-true-order-of-sql-operations/
+  
+[2025-10-03 16:32:47] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-13 10:23:14] [AVER][javafx] Unsupported JavaFX configuration: classes were loaded from 'unnamed module @1ca02ebc'  
+[2025-10-13 08:23:21] [INFO][net.sourceforge.ganttproject] Starting RSS check...  
+[2025-10-13 08:23:23] [INFO][net.sourceforge.ganttproject] RSS check finished  
+[2025-10-13 08:23:24] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  
+[2025-10-13 08:23:45] [INFO][org.jooq.Constants] 
+
+jOOQ tip of the day: In addition to <includes> and <excludes>, you can also use <includesSql> and <excludesSql> to generate regular expressions for the code generator! https://www.jooq.org/doc/latest/manual/code-generation/codegen-advanced/codegen-config-database/codegen-database-includes-excludes/
+  
+[2025-10-13 08:29:20] [INFO][net.sourceforge.ganttproject] [GanttOptions] save(): finished!!  

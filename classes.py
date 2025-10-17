@@ -5,6 +5,8 @@ import os
 import random
 import threading
 import re
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
 
 class BusyBoxC2:
     def __init__(self, server_ip, server_port):
@@ -13,6 +15,8 @@ class BusyBoxC2:
         self.server_ip = server_ip
         self.server_port = server_port
         self.prompt = " (busybox-c2)> "
+        self.prompt_history = FileHistory(".prompt_history")
+        self.prompt_session = PromptSession(history=self.prompt_history)
         self.options = []
 
         # Show banner
@@ -189,7 +193,7 @@ class BusyBoxC2:
         try:
             while True:
                 try:
-                    cmd = input(self.prompt)
+                    cmd = self.prompt_session.prompt(self.prompt)
 
                     match cmd.strip().lower():
                         case 'exit' | '/exit':

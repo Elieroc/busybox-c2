@@ -28,6 +28,7 @@ Adjust in config.json :
 - `/obfuscation_base64` : Command obfuscation with base64 encoding
 - `/backdoor_webshell` : Create httpd server and drop a custom pwnyshell
 - `/backdoor_telnet` : Create a telnet backdoor (without auth)
+- `/backdoor_ftp` : Create a FTP backdoor
 - `/download` : Download a file from agent
 - `/upload` : Upload a file to agent
 - `/load_prompt` : Enable prompt with username, path and hostname agent

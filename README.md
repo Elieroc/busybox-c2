@@ -19,3 +19,5 @@ BusyBoxC2 is a TCP bind shell command and control.
 - `/persistence_webshell` : Create httpd server and drop a custom pwnyshell
 - `/download` : Download a file from agent
 - `/upload` : Upload a file to agent
+- `/load_prompt` : Enable prompt with username, path and hostname agent
+- `/furtive` : Only execute input command without marker manipulation or obfuscation (no command output available)

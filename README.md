@@ -10,8 +10,17 @@
 ```
 ## Description
 BusyBoxC2 is a TCP bind shell command and control.
+## FAQ
+### What is Busybox ?
+Busybox is an implementation of many Unix commands in a single executable file.
+### Why using Busybox ?
+Busybox is present in various Linux distributions and it is unknown so it's useful to bypass SIEM rules :p
 ## Usage
 ```python3 main.py```
+## C2 Types
+Adjust in config.json :
+- Bind TCP
+- Reverse TCP
 ## Options
 - `/scan_discover` (root required) : ARP SCAN to found active hosts
 - `/obfuscation_ascii` : Command obfuscation with ASCII encoding
@@ -26,5 +35,4 @@ BusyBoxC2 is a TCP bind shell command and control.
 ## ToDo
 - Panix persistence module(s)
 - Payload generator
-- Detect socket terminaison
 - Busybox upgrade

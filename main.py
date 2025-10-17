@@ -14,8 +14,9 @@ def main():
 
     server_ip = config["server_ip"]
     server_port = config["server_port"]
+    c2_type = config["type"]
 
-    app = BusyBoxC2(server_ip, server_port)
+    app = BusyBoxC2(server_ip, server_port, c2_type)
     app.run()
     
 if __name__ == "__main__":

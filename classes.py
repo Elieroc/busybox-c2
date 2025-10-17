@@ -9,11 +9,12 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 
 class BusyBoxC2:
-    def __init__(self, server_ip, server_port):
+    def __init__(self, server_ip, server_port, c2_type):
 
         # Init app variables
         self.server_ip = server_ip
         self.server_port = server_port
+        self.c2_type = c2_type
         self.prompt = " (busybox-c2)> "
         self.prompt_history = FileHistory(".prompt_history")
         self.prompt_session = PromptSession(history=self.prompt_history)
@@ -33,16 +34,28 @@ class BusyBoxC2:
         print(Figlet(font="slant").renderText("BusyBox C2"))
 
     def _init_socket(self):
-        print(f"[...] Initialization of TCP connection to {self.server_ip}:{self.server_port}")
-        while True:
-            try:
-                self.socket = socket.create_connection((self.server_ip, self.server_port))
+        match self.c2_type:
+            case 'bind':
+                print(f"[...] Initialization of TCP connection to {self.server_ip}:{self.server_port}")
+                while True:
+                    try:
+                        self.socket = socket.create_connection((self.server_ip, self.server_port))
+                        print("[+] New connection !\n")
+                        break
+                    except KeyboardInterrupt:
+                        exit(0)
+                    except:
+                        pass
+            case 'reverse':
+                print(f"[...] Initialization of TCP listener on {self.server_ip}:{self.server_port}")
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.bind((self.server_ip, self.server_port))
+                self.socket.listen(5)
+                self.socket, client_addr = self.socket.accept()
                 print("[+] New connection !\n")
-                break
-            except KeyboardInterrupt:
+            case _:
+                print("Error")
                 exit(0)
-            except:
-                pass
 
         self.socket.setblocking(False)
         return self.socket

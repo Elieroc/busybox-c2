@@ -17,7 +17,12 @@ BusyBoxC2 is a TCP bind shell command and control.
 - `/obfuscation_ascii` : Command obfuscation with ASCII encoding
 - `/obfuscation_base64` : Command obfuscation with base64 encoding
 - `/install_webshell` : Create httpd server and drop a custom pwnyshell
+- `/telnet_backdoor` : Create a telnet backdoor (without auth)
 - `/download` : Download a file from agent
 - `/upload` : Upload a file to agent
 - `/load_prompt` : Enable prompt with username, path and hostname agent
 - `/furtive` : Only execute input command without marker manipulation or obfuscation (no command output available)
+
+## ToDo
+- Panix persistence module(s)
+- Payload generator

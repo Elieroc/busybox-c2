@@ -182,7 +182,7 @@ class BusyBoxC2:
         agent_user = self._send_cmd("echo $USER", output=False)[0].decode().split("\n", 1)[0]
         agent_hostname = self._send_cmd("hostname", output=False)[0].decode().split("\n", 1)[0]
         agent_pwd = self._send_cmd("echo $PWD", output=False)[0].decode().split("\n", 1)[0]
-
+        
         self.prompt = " (busybox-c2)[+] " + agent_user +  "@" + agent_hostname + ":" + agent_pwd + "> "
 
     def run(self):
@@ -223,6 +223,7 @@ class BusyBoxC2:
                         case '/furtive':
                             self.options.append('furtive')
                             if "load_prompt" in self.options: self.options.remove("load_prompt")
+                            self.prompt = " (busybox-c2)[§]> "
                         case _:
                             self._send_cmd(cmd)
                             if "load_prompt" in self.options: self._load_prompt()

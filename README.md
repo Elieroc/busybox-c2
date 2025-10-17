@@ -26,3 +26,4 @@ BusyBoxC2 is a TCP bind shell command and control.
 ## ToDo
 - Panix persistence module(s)
 - Payload generator
+- Detect socket terminaison

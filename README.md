@@ -9,7 +9,7 @@
 
 ```
 ## Description
-BusyBoxC2 is a TCP bind shell command and control.
+BusyBoxC2 is a TCP bind/reverse shell command and control based on busybox applets.
 ## FAQ
 ### What is Busybox ?
 Busybox is an implementation of many Unix commands in a single executable file.

